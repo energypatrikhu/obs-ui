@@ -45,6 +45,6 @@ Thumbs.db
 **/.svelte-kit
 
 # Build outputs
-app/static/_app/
+app/static/
 extension/.output/
 ui/build/
