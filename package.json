@@ -9,6 +9,7 @@
     "ui"
   ],
   "scripts": {
+    "clean:modules": "rm -rfv **/node_modules",
     "dev:app": "cd app && bun start",
     "dev:extension": "cd extension && bun run dev",
     "dev:ui": "cd ui && bun run dev",

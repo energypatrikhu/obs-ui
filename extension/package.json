@@ -16,16 +16,16 @@
   },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.5",
-    "@types/lodash": "^4.17.20",
+    "@types/lodash": "latest",
     "@wxt-dev/module-svelte": "^2.0.3",
     "svelte": "^5.38.6",
     "svelte-check": "^4.3.1",
-    "tslib": "^2.8.1",
-    "typescript": "^5.9.2",
+    "tslib": "latest",
+    "typescript": "latest",
     "wxt": "^0.20.6"
   },
   "dependencies": {
-    "@energypatrikhu/node-utils": "^0.2.3",
-    "lodash": "^4.17.21"
+    "@energypatrikhu/node-utils": "latest",
+    "lodash": "latest"
   }
 }
