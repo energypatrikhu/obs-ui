@@ -1,0 +1,22 @@
+{
+  "name": "obs-ui-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OBS UI Monorepo - App, Extension, and UI",
+  "workspaces": [
+    "app",
+    "extension",
+    "ui"
+  ],
+  "scripts": {
+    "dev:app": "cd app && bun start",
+    "dev:extension": "cd extension && bun run dev",
+    "dev:ui": "cd ui && bun run dev",
+    "build:app": "cd app && bun run compile",
+    "build:extension": "cd extension && bun run build",
+    "build:ui": "cd ui && bun run build",
+    "build": "bun run build:ui && bun run build:extension && bun run build:app",
+    "check:extension": "cd extension && bun run check",
+    "check:ui": "cd ui && bun run check"
+  }
+}

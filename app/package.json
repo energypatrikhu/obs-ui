@@ -1,0 +1,33 @@
+{
+  "name": "@obs-ui/app",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun ./src/index.ts",
+    "compile": "bun ./builder.ts"
+  },
+  "imports": {
+    "#libs/*": "./src/libs/*",
+    "#types/*": "./src/_types/*",
+    "#routes/*": "./src/routes/*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/lodash": "latest",
+    "@types/ws": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "latest"
+  },
+  "dependencies": {
+    "@energypatrikhu/node-utils": "latest",
+    "cors": "latest",
+    "express": "latest",
+    "lodash": "latest",
+    "socket.io": "latest",
+    "ws": "latest"
+  }
+}
