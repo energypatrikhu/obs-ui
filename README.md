@@ -15,7 +15,6 @@ A monorepo containing the OBS UI application, browser extension, and UI componen
 ## Prerequisites
 
 - [Bun](https://bun.sh/) (latest version)
-- Node.js >= 18.0.0
 
 ## Getting Started
 
@@ -111,7 +110,6 @@ All commands should be run from the root directory:
 
 | Command | Description |
 |---------|-------------|
-| `bun install` | Install all dependencies |
 | `bun run dev:app` | Start app in dev mode |
 | `bun run dev:extension` | Start extension in dev mode |
 | `bun run dev:ui` | Start UI in dev mode |
