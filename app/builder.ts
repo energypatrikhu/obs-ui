@@ -6,9 +6,9 @@ await Bun.build({
   publicPath: "./static/",
   compile: {
     target: "bun-windows-x64-baseline",
-    outfile: "energy-obs-ui.exe",
+    outfile: "obs-ui.exe",
     windows: {
-      title: "Energy OBS UI",
+      title: "OBS UI",
       copyright: `Copyright © ${new Date().getFullYear()} EnergyPatrikHU`,
       description:
         "An OBS UI application and browser extension to show Twitch stream data and now playing information from various music sources.",

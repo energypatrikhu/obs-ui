@@ -48,7 +48,7 @@
   {@render children()}
 {:else}
   <div class="text-4xl flex flex-col justify-center items-center text-center h-screen w-screen">
-    <span class="connection-error-text text-red-600 font-bold">Energy OBS UI</span>
+    <span class="connection-error-text text-red-600 font-bold">OBS UI</span>
     <span class="connection-error-text text-red-600">Can't connect to the server</span>
   </div>
 {/if}
