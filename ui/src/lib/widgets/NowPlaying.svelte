@@ -183,11 +183,12 @@
     left: 2rem;
     pointer-events: none;
     z-index: 1000;
+    overflow: visible;
   }
 
   .backdrop {
     position: absolute;
-    inset: -1rem;
+    inset: -2rem;
     background: radial-gradient(ellipse at bottom left, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
     opacity: 0;
     transition: opacity 0.6s ease;
