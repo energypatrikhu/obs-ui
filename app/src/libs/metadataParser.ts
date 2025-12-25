@@ -2,9 +2,23 @@ import type Metadata from "#types/Metadata";
 
 const splitters = [" - ", ": ", " – ", " — ", " ― ", " ~ ", " ～ ", " ∼ ", " — ", " ─ "];
 
-const artistSplitters = [" x ", ", ", " / ", " + ", " feat. ", " featuring ", " ft. ", " vs. ", " vs ", " v ", " w/ ", " w/"];
+const artistSplitters = [
+  " & ",
+  " x ",
+  ", ",
+  " / ",
+  " + ",
+  " feat. ",
+  " featuring ",
+  " ft. ",
+  " vs. ",
+  " vs ",
+  " v ",
+  " w/ ",
+  " w/",
+];
 
-const titleIndicators = ["ft", "feat", "featuring", "w/"];
+const titleIndicators = [" ft ", " feat ", " featuring ", " w/ "];
 
 const bracketsOpeners = ["(", "[", "{", "<", "【", "『", "「", "《", "（", "<"];
 const bracketsClosers = [")", "]", "}", ">", "】", "』", "」", "》", "）", ">"];
@@ -141,10 +155,13 @@ export function parseMetadata(metadata: Metadata) {
 
   const lowerCaseArtists = modifiedArtist.map((artist) => artist.toLowerCase());
   for (const artist of new Set(artists)) {
-    if (!lowerCaseArtists.includes(artist.toLowerCase())) {
-      const existingIndex = modifiedArtist.findIndex((existingArtist) => existingArtist.toLowerCase() === artist.toLowerCase());
+    const cleanedArtist = artist.replace(/^&\s*/, "").trim();
+    if (!lowerCaseArtists.includes(cleanedArtist.toLowerCase())) {
+      const existingIndex = modifiedArtist.findIndex(
+        (existingArtist) => existingArtist.toLowerCase() === cleanedArtist.toLowerCase(),
+      );
       if (existingIndex === -1) {
-        modifiedArtist.push(artist);
+        modifiedArtist.push(cleanedArtist);
       }
     }
   }
