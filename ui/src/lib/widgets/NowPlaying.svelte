@@ -14,8 +14,8 @@
 
   const showTime = 16;
 
-  let closeTimer = $state<number | null>(null);
-  const reAlertTimers = $state<number[]>([]);
+  let closeTimer = $state<NodeJS.Timeout | null>(null);
+  const reAlertTimers = $state<NodeJS.Timeout[]>([]);
 
   let showPopup = $state(false);
   let imagesLoaded = $state(false);
@@ -117,8 +117,6 @@
     id="now-playing"
     data-show={showPopup}
   >
-    <div class="backdrop"></div>
-
     <div class="container">
       <div class="album-art-wrapper">
         <div class="album-art-glow"></div>
@@ -186,15 +184,6 @@
     overflow: visible;
   }
 
-  .backdrop {
-    position: absolute;
-    inset: -2rem;
-    background: radial-gradient(ellipse at bottom left, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.6s ease;
-    pointer-events: none;
-  }
-
   .container {
     display: flex;
     align-items: flex-end;
@@ -213,7 +202,7 @@
   .album-art-glow {
     position: absolute;
     inset: -0.75rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 1.5rem;
     opacity: 0;
     filter: blur(20px);
@@ -347,11 +336,6 @@
     background: linear-gradient(to top, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8));
     border-radius: 0.125rem;
     animation: none;
-  }
-
-  /* Show State */
-  #now-playing[data-show="true"] .backdrop {
-    opacity: 1;
   }
 
   #now-playing[data-show="true"] .container {
