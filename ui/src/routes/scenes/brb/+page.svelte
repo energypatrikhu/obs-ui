@@ -2,6 +2,7 @@
   import { getSocketIo } from "$lib/socket-io.svelte";
   import type { NowPlaying as NowPlayingType } from "$lib/types/NowPlaying";
   import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
 
   const socketIo = getSocketIo();
 
@@ -11,6 +12,7 @@
   let favicon = $state("");
   let hasData = $state(false);
   let isUpdating = $state(true);
+  let mounted = $state(false);
 
   function updateNowPlaying(data: NowPlayingType) {
     if (data.artist === artist && data.track === track) {
@@ -32,47 +34,49 @@
     }, 300);
   }
 
-  onMount(() => {
+  onMount(async () => {
+    setTimeout(() => {
+      mounted = true;
+    }, 500);
+
     try {
-      setTimeout(async () => {
-        const response = await fetch("http://localhost:2442/nowPlaying");
-        if (response.ok) {
-          const data: NowPlayingType = await response.json();
-          if (data && data.artist && data.track) {
-            // Preload images before showing
-            const imgPromises = [
-              new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(true);
-                img.src = data.thumbnail;
-              }),
-              new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(true);
-                img.src = data.favicon;
-              }),
-            ];
+      const response = await fetch("http://localhost:2442/nowPlaying");
+      if (response.ok) {
+        const data: NowPlayingType = await response.json();
+        if (data && data.artist && data.track) {
+          // Preload images before showing
+          const imgPromises = [
+            new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => resolve(true);
+              img.onerror = () => resolve(true);
+              img.src = data.thumbnail;
+            }),
+            new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => resolve(true);
+              img.onerror = () => resolve(true);
+              img.src = data.favicon;
+            }),
+          ];
 
-            await Promise.all(imgPromises);
+          await Promise.all(imgPromises);
 
-            artist = data.artist;
-            track = data.track;
-            thumbnail = data.thumbnail;
-            favicon = data.favicon;
-            hasData = true;
-            // Wait for card to render in invisible state, then fade in
-            setTimeout(() => {
+          artist = data.artist;
+          track = data.track;
+          thumbnail = data.thumbnail;
+          favicon = data.favicon;
+          hasData = true;
+          // Wait for card to render in invisible state, then fade in
+          setTimeout(() => {
+            requestAnimationFrame(() => {
               requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  isUpdating = false;
-                });
+                isUpdating = false;
               });
-            }, 400);
-          }
+            });
+          }, 400);
         }
-      }, 1500);
+      }
     } catch (error) {
       console.error("Failed to fetch current playing music:", error);
     }
@@ -87,85 +91,90 @@
   });
 </script>
 
-<div class="brb-container fade-in">
-  <div class="bg-gradient"></div>
-  <div class="particles">
-    {#each Array(20) as _, i}
-      <div
-        class="particle"
-        style="--i: {i}"
-      ></div>
-    {/each}
-  </div>
-
-  <div class="content">
-    <div class="brb-text-wrapper">
-      <h1 class="brb-text">Be Right Back</h1>
-      <div class="brb-underline"></div>
+{#if mounted}
+  <div
+    transition:fade
+    class="brb-container"
+  >
+    <div class="bg-gradient"></div>
+    <div class="particles">
+      {#each Array(20) as _, i}
+        <div
+          class="particle"
+          style="--i: {i}"
+        ></div>
+      {/each}
     </div>
 
-    {#if hasData}
-      <div
-        class="now-playing-card"
-        data-updating={isUpdating}
-      >
-        <div class="card-glow"></div>
-        <div class="album-art-wrapper">
-          <div class="album-art">
-            <img
-              src={thumbnail}
-              alt="Album cover"
-              class="thumbnail"
-            />
-            <div class="album-overlay"></div>
-            <div class="favicon-badge">
+    <div class="content">
+      <div class="brb-text-wrapper">
+        <h1 class="brb-text">Be Right Back</h1>
+        <div class="brb-underline"></div>
+      </div>
+
+      {#if hasData}
+        <div
+          class="now-playing-card"
+          data-updating={isUpdating}
+        >
+          <div class="card-glow"></div>
+          <div class="album-art-wrapper">
+            <div class="album-art">
               <img
-                src={favicon}
-                alt="Source"
-                class="favicon"
+                src={thumbnail}
+                alt="Album cover"
+                class="thumbnail"
               />
+              <div class="album-overlay"></div>
+              <div class="favicon-badge">
+                <img
+                  src={favicon}
+                  alt="Source"
+                  class="favicon"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="info">
+            <div class="music-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M9 18V5l12-2v13"></path>
+                <circle
+                  cx="6"
+                  cy="18"
+                  r="3"
+                ></circle>
+                <circle
+                  cx="18"
+                  cy="16"
+                  r="3"
+                ></circle>
+              </svg>
+            </div>
+            <div class="text-content">
+              <div class="label">Now Playing</div>
+              <div class="track-name">{track}</div>
+              <div class="artist-name">{artist}</div>
+            </div>
+            <div class="visualizer">
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
             </div>
           </div>
         </div>
-
-        <div class="info">
-          <div class="music-icon">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M9 18V5l12-2v13"></path>
-              <circle
-                cx="6"
-                cy="18"
-                r="3"
-              ></circle>
-              <circle
-                cx="18"
-                cy="16"
-                r="3"
-              ></circle>
-            </svg>
-          </div>
-          <div class="text-content">
-            <div class="label">Now Playing</div>
-            <div class="track-name">{track}</div>
-            <div class="artist-name">{artist}</div>
-          </div>
-          <div class="visualizer">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-          </div>
-        </div>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </div>
-</div>
+{/if}
 
 <style>
   .brb-container {
@@ -178,21 +187,6 @@
     padding: 2rem;
     overflow: hidden;
     position: relative;
-  }
-
-  .fade-in {
-    animation: pageFadeIn 1.5s ease-out;
-  }
-
-  @keyframes pageFadeIn {
-    0% {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
   }
 
   .bg-gradient {
