@@ -32,45 +32,47 @@
     }, 300);
   }
 
-  onMount(async () => {
+  onMount(() => {
     try {
-      const response = await fetch("http://localhost:2442/nowPlaying");
-      if (response.ok) {
-        const data: NowPlayingType = await response.json();
-        if (data && data.artist && data.track) {
-          // Preload images before showing
-          const imgPromises = [
-            new Promise((resolve) => {
-              const img = new Image();
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(true);
-              img.src = data.thumbnail;
-            }),
-            new Promise((resolve) => {
-              const img = new Image();
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(true);
-              img.src = data.favicon;
-            }),
-          ];
+      setTimeout(async () => {
+        const response = await fetch("http://localhost:2442/nowPlaying");
+        if (response.ok) {
+          const data: NowPlayingType = await response.json();
+          if (data && data.artist && data.track) {
+            // Preload images before showing
+            const imgPromises = [
+              new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(true);
+                img.src = data.thumbnail;
+              }),
+              new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(true);
+                img.src = data.favicon;
+              }),
+            ];
 
-          await Promise.all(imgPromises);
+            await Promise.all(imgPromises);
 
-          artist = data.artist;
-          track = data.track;
-          thumbnail = data.thumbnail;
-          favicon = data.favicon;
-          hasData = true;
-          // Wait for card to render in invisible state, then fade in
-          setTimeout(() => {
-            requestAnimationFrame(() => {
+            artist = data.artist;
+            track = data.track;
+            thumbnail = data.thumbnail;
+            favicon = data.favicon;
+            hasData = true;
+            // Wait for card to render in invisible state, then fade in
+            setTimeout(() => {
               requestAnimationFrame(() => {
-                isUpdating = false;
+                requestAnimationFrame(() => {
+                  isUpdating = false;
+                });
               });
-            });
-          }, 400);
+            }, 400);
+          }
         }
-      }
+      }, 1500);
     } catch (error) {
       console.error("Failed to fetch current playing music:", error);
     }
@@ -85,7 +87,7 @@
   });
 </script>
 
-<div class="starting-container">
+<div class="starting-container fade-in">
   <div class="bg-gradient"></div>
   <div class="particles">
     {#each Array(20) as _, i}
@@ -176,6 +178,21 @@
     padding: 2rem;
     overflow: hidden;
     position: relative;
+  }
+
+  .fade-in {
+    animation: pageFadeIn 1.5s ease-out;
+  }
+
+  @keyframes pageFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   .bg-gradient {

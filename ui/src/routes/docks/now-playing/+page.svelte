@@ -100,8 +100,8 @@
         />
       </div>
       <div class="info">
-        <div class="artist">{artist}</div>
         <div class="track">{track}</div>
+        <div class="artist">{artist}</div>
         {#if favicon}
           <div class="favicon">
             <img
@@ -130,6 +130,9 @@
     text-align: center;
     transition: opacity 0.3s ease;
     opacity: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .now-playing-card.updating {
@@ -137,42 +140,61 @@
   }
 
   .artwork {
-    width: 300px;
-    height: 300px;
-    margin-bottom: 2rem;
-    border-radius: 1rem;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 0.75rem;
+    border-radius: 0.375rem;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .artwork:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 35px rgba(168, 85, 247, 0.4);
   }
 
   .artwork img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .artwork:hover img {
+    transform: scale(1.1);
   }
 
   .info {
-    max-width: 400px;
+    max-width: 180px;
     margin: 0 auto;
   }
 
   .artist {
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: #c084fc;
-    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.375rem;
+    transition: color 0.3s ease;
   }
 
   .track {
-    font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #c084fc;
+    margin-bottom: 0.125rem;
+    transition: color 0.3s ease;
   }
 
   .favicon {
-    width: 40px;
-    height: 40px;
+    width: 20px;
+    height: 20px;
     margin: 0 auto;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+  }
+
+  .favicon:hover {
+    opacity: 1;
   }
 
   .favicon img {

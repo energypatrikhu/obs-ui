@@ -32,45 +32,47 @@
     }, 300);
   }
 
-  onMount(async () => {
+  onMount(() => {
     try {
-      const response = await fetch("http://localhost:2442/nowPlaying");
-      if (response.ok) {
-        const data: NowPlayingType = await response.json();
-        if (data && data.artist && data.track) {
-          // Preload images before showing
-          const imgPromises = [
-            new Promise((resolve) => {
-              const img = new Image();
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(true);
-              img.src = data.thumbnail;
-            }),
-            new Promise((resolve) => {
-              const img = new Image();
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(true);
-              img.src = data.favicon;
-            }),
-          ];
+      setTimeout(async () => {
+        const response = await fetch("http://localhost:2442/nowPlaying");
+        if (response.ok) {
+          const data: NowPlayingType = await response.json();
+          if (data && data.artist && data.track) {
+            // Preload images before showing
+            const imgPromises = [
+              new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(true);
+                img.src = data.thumbnail;
+              }),
+              new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(true);
+                img.src = data.favicon;
+              }),
+            ];
 
-          await Promise.all(imgPromises);
+            await Promise.all(imgPromises);
 
-          artist = data.artist;
-          track = data.track;
-          thumbnail = data.thumbnail;
-          favicon = data.favicon;
-          hasData = true;
-          // Wait for card to render in invisible state, then fade in
-          setTimeout(() => {
-            requestAnimationFrame(() => {
+            artist = data.artist;
+            track = data.track;
+            thumbnail = data.thumbnail;
+            favicon = data.favicon;
+            hasData = true;
+            // Wait for card to render in invisible state, then fade in
+            setTimeout(() => {
               requestAnimationFrame(() => {
-                isUpdating = false;
+                requestAnimationFrame(() => {
+                  isUpdating = false;
+                });
               });
-            });
-          }, 400);
+            }, 400);
+          }
         }
-      }
+      }, 1500);
     } catch (error) {
       console.error("Failed to fetch current playing music:", error);
     }
@@ -85,7 +87,7 @@
   });
 </script>
 
-<div class="ending-container">
+<div class="brb-container fade-in">
   <div class="bg-gradient"></div>
   <div class="particles">
     {#each Array(20) as _, i}
@@ -97,10 +99,9 @@
   </div>
 
   <div class="content">
-    <div class="text-wrapper">
-      <h1 class="main-text">Stream Ending</h1>
-      <p class="subtitle">Thanks for watching!</p>
-      <div class="underline"></div>
+    <div class="brb-text-wrapper">
+      <h1 class="brb-text">Be Right Back</h1>
+      <div class="brb-underline"></div>
     </div>
 
     {#if hasData}
@@ -167,7 +168,7 @@
 </div>
 
 <style>
-  .ending-container {
+  .brb-container {
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -179,12 +180,27 @@
     position: relative;
   }
 
+  .fade-in {
+    animation: pageFadeIn 1.5s ease-out;
+  }
+
+  @keyframes pageFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .bg-gradient {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at 20% 30%, rgba(239, 68, 68, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 70%, rgba(249, 115, 22, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+    background: radial-gradient(ellipse at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
     animation: gradientShift 20s ease-in-out infinite;
   }
 
@@ -211,9 +227,9 @@
     position: absolute;
     width: 4px;
     height: 4px;
-    background: rgba(239, 68, 68, 0.4);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
     animation: float calc(10s + var(--i) * 2s) linear infinite;
     left: calc(var(--i) * 5%);
     top: calc(var(--i) * 5%);
@@ -258,24 +274,24 @@
     }
   }
 
-  .text-wrapper {
+  .brb-text-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
   }
 
-  .main-text {
+  .brb-text {
     font-size: 5rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #ffffff 0%, #ef4444 50%, #f97316 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #a78bfa 50%, #60a5fa 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-align: center;
     letter-spacing: -0.03em;
     margin: 0;
-    text-shadow: 0 0 80px rgba(239, 68, 68, 0.5);
+    text-shadow: 0 0 80px rgba(167, 139, 250, 0.5);
     animation: textGlow 3s ease-in-out infinite;
     position: relative;
   }
@@ -283,38 +299,17 @@
   @keyframes textGlow {
     0%,
     100% {
-      filter: brightness(1) drop-shadow(0 0 20px rgba(239, 68, 68, 0.5));
+      filter: brightness(1) drop-shadow(0 0 20px rgba(167, 139, 250, 0.5));
     }
     50% {
-      filter: brightness(1.2) drop-shadow(0 0 40px rgba(239, 68, 68, 0.8));
+      filter: brightness(1.2) drop-shadow(0 0 40px rgba(167, 139, 250, 0.8));
     }
   }
 
-  .subtitle {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
-    text-align: center;
-    margin: 0;
-    letter-spacing: 0.02em;
-    animation: subtitleFadeIn 1s ease-out 0.3s backwards;
-  }
-
-  @keyframes subtitleFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .underline {
+  .brb-underline {
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, transparent 0%, #ef4444 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, #a78bfa 50%, transparent 100%);
     border-radius: 2px;
     animation: underlineExpand 2s ease-out;
   }
@@ -342,7 +337,7 @@
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-      0 0 100px rgba(239, 68, 68, 0.2);
+      0 0 100px rgba(139, 92, 246, 0.2);
     opacity: 1;
     transform: translateY(0) scale(1);
     overflow: hidden;
@@ -359,7 +354,7 @@
   .card-glow {
     position: absolute;
     inset: -2px;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(249, 115, 22, 0.3), rgba(245, 158, 11, 0.3));
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3), rgba(236, 72, 153, 0.3));
     border-radius: 2rem;
     filter: blur(20px);
     opacity: 0.5;
@@ -388,7 +383,7 @@
     content: "";
     position: absolute;
     inset: -10px;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(249, 115, 22, 0.4));
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(59, 130, 246, 0.4));
     border-radius: 1.5rem;
     filter: blur(20px);
     opacity: 0;
@@ -432,7 +427,7 @@
   .album-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
     pointer-events: none;
   }
 
@@ -451,7 +446,7 @@
     box-shadow:
       0 4px 16px rgba(0, 0, 0, 0.6),
       0 0 0 3px rgba(0, 0, 0, 0.9),
-      0 0 0 4px rgba(239, 68, 68, 0.3);
+      0 0 0 4px rgba(139, 92, 246, 0.3);
     animation: badgePop 0.5s ease forwards 1s;
     opacity: 0;
     transform: scale(0);
@@ -482,12 +477,12 @@
   .music-icon {
     width: 2.5rem;
     height: 2.5rem;
-    color: rgba(239, 68, 68, 0.8);
+    color: rgba(139, 92, 246, 0.8);
     flex-shrink: 0;
     opacity: 0;
     transform: rotate(-180deg) scale(0);
     animation: iconSpin 0.6s ease forwards 0.8s;
-    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5));
   }
 
   @keyframes iconSpin {
@@ -522,7 +517,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: rgba(239, 68, 68, 0.8);
+    color: rgba(139, 92, 246, 0.8);
     margin-bottom: 0.5rem;
   }
 
@@ -566,9 +561,9 @@
 
   .bar {
     width: 0.35rem;
-    background: linear-gradient(to top, rgba(239, 68, 68, 0.6), rgba(239, 68, 68, 1));
+    background: linear-gradient(to top, rgba(139, 92, 246, 0.6), rgba(167, 139, 250, 1));
     border-radius: 0.175rem;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
     animation: visualize 1s ease-in-out infinite;
   }
 
@@ -603,12 +598,8 @@
   }
 
   @media (max-width: 968px) {
-    .main-text {
+    .brb-text {
       font-size: 3.5rem;
-    }
-
-    .subtitle {
-      font-size: 1.25rem;
     }
 
     .now-playing-card {
@@ -629,12 +620,8 @@
   }
 
   @media (max-width: 640px) {
-    .main-text {
+    .brb-text {
       font-size: 2.5rem;
-    }
-
-    .subtitle {
-      font-size: 1.125rem;
     }
 
     .content {
