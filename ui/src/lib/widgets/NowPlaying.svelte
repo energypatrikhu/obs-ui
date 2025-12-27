@@ -12,7 +12,7 @@
   let thumbnail = $state("");
   let favicon = $state("");
 
-  const showTime = 16;
+  const showTime = 25;
 
   let closeTimer = $state<NodeJS.Timeout | null>(null);
   const reAlertTimers = $state<NodeJS.Timeout[]>([]);
