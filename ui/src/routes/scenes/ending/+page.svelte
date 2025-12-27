@@ -117,6 +117,7 @@
         <div
           class="now-playing-card"
           data-updating={isUpdating}
+          style="--thumbnail: url({thumbnail})"
         >
           <div class="card-glow"></div>
           <div class="album-art-wrapper">
@@ -346,7 +347,7 @@
     display: flex;
     align-items: center;
     gap: 2.5rem;
-    background: linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.85) 0%, rgba(20, 20, 20, 0.95) 100%);
     backdrop-filter: blur(40px);
     padding: 2.5rem;
     border-radius: 2rem;
@@ -360,6 +361,20 @@
     transition:
       opacity 0.3s ease,
       transform 0.3s ease;
+  }
+
+  .now-playing-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url({thumbnail});
+    background-size: 150%;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(10px) brightness(0.3) contrast(0.8);
+    opacity: 0.4;
+    z-index: 0;
+    transition: background-image 0.5s ease;
   }
 
   .now-playing-card[data-updating="true"] {
