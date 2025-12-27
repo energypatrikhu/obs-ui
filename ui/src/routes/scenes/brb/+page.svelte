@@ -345,7 +345,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-image: url({thumbnail});
+    background-image: var(--thumbnail);
     background-size: 150%;
     background-position: center;
     background-repeat: no-repeat;
