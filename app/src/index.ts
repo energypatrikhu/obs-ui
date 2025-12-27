@@ -12,7 +12,7 @@ import { handleIoCallbacks, handleIoTwitchCallbacks } from "#libs/io-callbacks";
 import nowPlayingRoute from "#routes/nowPlaying";
 import twitchCallbackRoute from "#routes/twitchCallback";
 import widgetsSettingsRoute from "#routes/widgetsSettings";
-import { readdirSync } from "fs";
+import { Dirent, readdirSync } from "fs";
 
 (async () => {
   const logger = new Logger("Server");
@@ -52,9 +52,13 @@ import { readdirSync } from "fs";
     logger.info(`Server running @ http://localhost:${PORT}/`);
     // List pages
     logger.info(`Available pages:`);
-    const availableRoutes: string[] = readdirSync(join(__dirname, "../static")).filter((file) => file.endsWith(".html"));
+    const routePath = join(__dirname, "../static");
+    const availableRoutes: Dirent[] = readdirSync(routePath, {
+      withFileTypes: true,
+      recursive: true,
+    }).filter((item) => item.isFile() && item.name.endsWith(".html"));
     for (const route of availableRoutes) {
-      logger.info(` - http://localhost:${PORT}/${route}`);
+      logger.info(` - http://localhost:${PORT}${route.parentPath.slice(routePath.length).replace(/\\/g, "/")}/${route.name}`);
     }
 
     app.locals.twitch = new TwitchApi(app.locals.io, app.locals.db);
