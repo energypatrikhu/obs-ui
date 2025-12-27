@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import { getSocketIo } from "$lib/socket-io.svelte";
   import type { NowPlaying as NowPlayingType } from "$lib/types/NowPlaying";
   import { onMount } from "svelte";
@@ -13,6 +14,59 @@
   let hasData = $state(false);
   let isUpdating = $state(true);
   let mounted = $state(false);
+
+  // Get scene type from query parameter
+  let scene = $derived($page.url.searchParams.get("scene") || "brb");
+
+  // Theme configuration based on scene
+  type SceneKey = "brb" | "ending" | "starting-soon";
+  type Theme = {
+    containerClass: string;
+    mainText: string;
+    subtitle: string | null;
+    gradient: string;
+    textGradient: string;
+    accentColor: string;
+    particleColor: string;
+    glowColor: string;
+  };
+  const themes: Record<SceneKey, Theme> = {
+    "brb": {
+      containerClass: "brb-container",
+      mainText: "Be Right Back",
+      subtitle: null,
+      gradient:
+        "radial-gradient(ellipse at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(59, 130, 246, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 70%)",
+      textGradient: "linear-gradient(135deg, #ffffff 0%, #8b5cf6 50%, #ec4899 100%)",
+      accentColor: "#8b5cf6",
+      particleColor: "rgba(139, 92, 246, 0.4)",
+      glowColor: "rgba(139, 92, 246, 0.5)",
+    },
+    "ending": {
+      containerClass: "ending-container",
+      mainText: "Stream Ending",
+      subtitle: "Thanks for watching!",
+      gradient:
+        "radial-gradient(ellipse at 20% 30%, rgba(239, 68, 68, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(249, 115, 22, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 70%)",
+      textGradient: "linear-gradient(135deg, #ffffff 0%, #ef4444 50%, #f97316 100%)",
+      accentColor: "#ef4444",
+      particleColor: "rgba(239, 68, 68, 0.4)",
+      glowColor: "rgba(239, 68, 68, 0.5)",
+    },
+    "starting-soon": {
+      containerClass: "starting-container",
+      mainText: "Starting Soon",
+      subtitle: null,
+      gradient:
+        "radial-gradient(ellipse at 20% 30%, rgba(34, 197, 94, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(59, 130, 246, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%)",
+      textGradient: "linear-gradient(135deg, #ffffff 0%, #22c55e 50%, #10b981 100%)",
+      accentColor: "#22c55e",
+      particleColor: "rgba(34, 197, 94, 0.4)",
+      glowColor: "rgba(34, 197, 94, 0.5)",
+    },
+  };
+
+  let currentTheme = $derived(themes[scene as SceneKey] || themes.brb);
 
   function updateNowPlaying(data: NowPlayingType) {
     if (data.artist === artist && data.track === track) {
@@ -94,7 +148,8 @@
 {#if mounted}
   <div
     transition:fade
-    class="brb-container"
+    class={currentTheme.containerClass}
+    style="--bg-gradient: {currentTheme.gradient}; --text-gradient: {currentTheme.textGradient}; --accent-color: {currentTheme.accentColor}; --particle-color: {currentTheme.particleColor}; --glow-color: {currentTheme.glowColor}"
   >
     <div class="bg-gradient"></div>
     <div class="particles">
@@ -107,9 +162,12 @@
     </div>
 
     <div class="content">
-      <div class="brb-text-wrapper">
-        <h1 class="brb-text">Be Right Back</h1>
-        <div class="brb-underline"></div>
+      <div class="text-wrapper">
+        <h1 class="main-text">{currentTheme.mainText}</h1>
+        {#if currentTheme.subtitle}
+          <p class="subtitle">{currentTheme.subtitle}</p>
+        {/if}
+        <div class="underline"></div>
       </div>
 
       {#if hasData}
@@ -178,7 +236,9 @@
 {/if}
 
 <style>
-  .brb-container {
+  .brb-container,
+  .ending-container,
+  .starting-container {
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -193,9 +253,7 @@
   .bg-gradient {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 70%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+    background: var(--bg-gradient);
     animation: gradientShift 20s ease-in-out infinite;
   }
 
@@ -222,9 +280,9 @@
     position: absolute;
     width: 4px;
     height: 4px;
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--particle-color);
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 10px var(--glow-color);
     animation: float calc(10s + var(--i) * 2s) linear infinite;
     left: calc(var(--i) * 5%);
     top: calc(var(--i) * 5%);
@@ -269,24 +327,24 @@
     }
   }
 
-  .brb-text-wrapper {
+  .text-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
   }
 
-  .brb-text {
+  .main-text {
     font-size: 5rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #ffffff 0%, #a78bfa 50%, #60a5fa 100%);
+    background: var(--text-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-align: center;
     letter-spacing: -0.03em;
     margin: 0;
-    text-shadow: 0 0 80px rgba(167, 139, 250, 0.5);
+    text-shadow: 0 0 80px var(--glow-color);
     animation: textGlow 3s ease-in-out infinite;
     position: relative;
   }
@@ -294,17 +352,24 @@
   @keyframes textGlow {
     0%,
     100% {
-      filter: brightness(1) drop-shadow(0 0 20px rgba(167, 139, 250, 0.5));
+      filter: brightness(1) drop-shadow(0 0 20px var(--glow-color));
     }
     50% {
-      filter: brightness(1.2) drop-shadow(0 0 40px rgba(167, 139, 250, 0.8));
+      filter: brightness(1.2) drop-shadow(0 0 40px var(--glow-color));
     }
   }
 
-  .brb-underline {
+  .subtitle {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+    text-align: center;
+  }
+
+  .underline {
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, transparent 0%, #a78bfa 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, var(--accent-color) 50%, transparent 100%);
     border-radius: 2px;
     animation: underlineExpand 2s ease-out;
   }
@@ -332,7 +397,7 @@
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-      0 0 100px rgba(139, 92, 246, 0.2);
+      0 0 100px var(--glow-color);
     opacity: 1;
     transform: translateY(0) scale(1);
     overflow: hidden;
@@ -363,7 +428,7 @@
   .card-glow {
     position: absolute;
     inset: -2px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3), rgba(236, 72, 153, 0.3));
+    background: linear-gradient(135deg, var(--glow-color), var(--accent-color), var(--glow-color));
     border-radius: 2rem;
     filter: blur(20px);
     opacity: 0.5;
@@ -392,7 +457,7 @@
     content: "";
     position: absolute;
     inset: -10px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(59, 130, 246, 0.4));
+    background: linear-gradient(135deg, var(--accent-color), var(--glow-color));
     border-radius: 1.5rem;
     filter: blur(20px);
     opacity: 0;
@@ -436,7 +501,7 @@
   .album-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
     pointer-events: none;
   }
 
@@ -455,7 +520,7 @@
     box-shadow:
       0 4px 16px rgba(0, 0, 0, 0.6),
       0 0 0 3px rgba(0, 0, 0, 0.9),
-      0 0 0 4px rgba(139, 92, 246, 0.3);
+      0 0 0 4px var(--glow-color);
     animation: badgePop 0.5s ease forwards 1s;
     opacity: 0;
     transform: scale(0);
@@ -486,12 +551,12 @@
   .music-icon {
     width: 2.5rem;
     height: 2.5rem;
-    color: rgba(139, 92, 246, 0.8);
+    color: var(--accent-color);
     flex-shrink: 0;
     opacity: 0;
     transform: rotate(-180deg) scale(0);
     animation: iconSpin 0.6s ease forwards 0.8s;
-    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5));
+    filter: drop-shadow(0 0 10px var(--glow-color));
   }
 
   @keyframes iconSpin {
@@ -526,7 +591,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: rgba(139, 92, 246, 0.8);
+    color: var(--accent-color);
     margin-bottom: 0.5rem;
   }
 
@@ -570,9 +635,9 @@
 
   .bar {
     width: 0.35rem;
-    background: linear-gradient(to top, rgba(139, 92, 246, 0.6), rgba(167, 139, 250, 1));
+    background: linear-gradient(to top, var(--accent-color), var(--glow-color));
     border-radius: 0.175rem;
-    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 10px var(--glow-color);
     animation: visualize 1s ease-in-out infinite;
   }
 
@@ -607,7 +672,7 @@
   }
 
   @media (max-width: 968px) {
-    .brb-text {
+    .main-text {
       font-size: 3.5rem;
     }
 
@@ -629,7 +694,7 @@
   }
 
   @media (max-width: 640px) {
-    .brb-text {
+    .main-text {
       font-size: 2.5rem;
     }
 
