@@ -156,10 +156,27 @@
   }
 
   $effect.pre(() => {
-    socketIo.client.on("nowPlaying", (data: NowPlaying) => {
+    socketIo.client.on("nowPlaying", async (data: NowPlaying) => {
       if (data.artist === artist && data.track === track && data.thumbnail === thumbnail && data.favicon === favicon) {
         return;
       }
+
+      // Preload images before showing
+      const imgPromises = [
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(true);
+          img.src = data.thumbnail;
+        }),
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(true);
+          img.src = data.favicon;
+        }),
+      ];
+      await Promise.all(imgPromises);
 
       artist = data.artist;
       track = data.track;
@@ -171,9 +188,6 @@
         clearTimeout(reAlertTimer);
       }
       reAlertTimers.length = 0;
-
-      // Preload images first
-      preloadImages(data.thumbnail, data.favicon);
 
       popup();
 

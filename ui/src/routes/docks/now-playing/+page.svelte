@@ -37,39 +37,40 @@
     try {
       const resp = await axios.get<NowPlayingType>("http://localhost:2442/nowPlaying");
       const data: NowPlayingType | undefined = resp.data;
-      if (data && data.artist && data.track) {
-        // Preload images before showing
-        const imgPromises = [
-          new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(true);
-            img.src = data.thumbnail;
-          }),
-          new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(true);
-            img.src = data.favicon;
-          }),
-        ];
-
-        await Promise.all(imgPromises);
-
-        artist = data.artist;
-        track = data.track;
-        thumbnail = data.thumbnail;
-        favicon = data.favicon;
-        hasData = true;
-        // Wait for card to render in invisible state, then fade in
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              isUpdating = false;
-            });
-          });
-        }, 400);
+      if (!data || !data.artist || !data.track) {
+        return;
       }
+
+      // Preload images before showing
+      const imgPromises = [
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(true);
+          img.src = data.thumbnail;
+        }),
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(true);
+          img.src = data.favicon;
+        }),
+      ];
+      await Promise.all(imgPromises);
+
+      artist = data.artist;
+      track = data.track;
+      thumbnail = data.thumbnail;
+      favicon = data.favicon;
+      hasData = true;
+      // Wait for card to render in invisible state, then fade in
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            isUpdating = false;
+          });
+        });
+      }, 400);
     } catch (error) {
       console.error("Failed to fetch current playing music:", error);
     }
