@@ -3,9 +3,91 @@
 
   import { getSocketIo } from "$lib/socket-io.svelte";
   import { getWidgets } from "$lib/widgets.svelte";
+  import AudioMotionAnalyzer from "audiomotion-analyzer";
 
   const widgets = getWidgets();
   const socketIo = getSocketIo();
+
+  let visualizerContainer: HTMLDivElement | null = $state(null);
+  let analyzerInstance: AudioMotionAnalyzer | null = $state(null);
+  let audioStream: MediaStream | null = $state(null);
+  let cardEl: HTMLDivElement | null = $state(null);
+  let resizeObserver: ResizeObserver | null = $state(null);
+
+  function updateVisualizerPosition() {
+    if (!cardEl || !visualizerContainer) return;
+    const cardH = cardEl.offsetHeight || parseFloat(getComputedStyle(cardEl).height) || 0;
+    const offset = Math.max(0, Math.round(cardH));
+    visualizerContainer.style.bottom = `${offset}px`;
+  }
+
+  $effect(() => {
+    (async () => {
+      try {
+        if (!visualizerContainer) {
+          return;
+        }
+
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioDevice = devices.find(
+          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("vaio3"),
+        );
+        if (!audioDevice) {
+          throw new Error('Audio device "vaio3" not found');
+        }
+
+        audioStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            noiseSuppression: false,
+            echoCancellation: false,
+            autoGainControl: false,
+            frameRate: { ideal: 60 },
+            sampleRate: 48000,
+            sampleSize: 24,
+            backgroundBlur: false,
+            deviceId: audioDevice.deviceId,
+            channelCount: 2,
+          },
+        });
+
+        analyzerInstance = new AudioMotionAnalyzer(visualizerContainer, {
+          mode: 5,
+          volume: 0,
+          channelLayout: "single",
+          showScaleX: false,
+          showBgColor: false,
+          overlay: true,
+          showPeaks: false,
+          roundBars: true,
+          ansiBands: false,
+          gradient: "steelblue",
+          frequencyScale: "log",
+          smoothing: 0.5,
+        });
+
+        analyzerInstance.registerGradient("colorSchema", {
+          colorStops: ["#1a1a1a", "#2a2a2a", "#ffffff"],
+        });
+        analyzerInstance.gradient = "colorSchema";
+
+        const source = analyzerInstance.audioCtx.createMediaStreamSource(audioStream);
+        analyzerInstance.connectInput(source);
+
+        // position the visualizer dynamically based on element size
+        updateVisualizerPosition();
+        if (cardEl || visualizerContainer) {
+          resizeObserver = new ResizeObserver(updateVisualizerPosition);
+          if (cardEl) resizeObserver.observe(cardEl);
+          if (visualizerContainer) resizeObserver.observe(visualizerContainer);
+          window.addEventListener("resize", updateVisualizerPosition);
+        }
+      } catch (err) {
+        console.warn("Microphone visualizer unavailable:", err);
+      }
+    })();
+  });
 
   let artist = $state("");
   let track = $state("");
@@ -108,6 +190,23 @@
       }
 
       socketIo.client.off("nowPlaying");
+
+      try {
+        if (analyzerInstance && analyzerInstance.disconnectInput) {
+          analyzerInstance.disconnectInput();
+        }
+      } catch (e) {}
+      if (audioStream) {
+        audioStream.getTracks().forEach((t) => t.stop());
+      }
+
+      if (resizeObserver) {
+        try {
+          resizeObserver.disconnect();
+        } catch (e) {}
+        resizeObserver = null;
+      }
+      window.removeEventListener("resize", updateVisualizerPosition);
     };
   });
 </script>
@@ -136,7 +235,10 @@
         </div>
       </div>
 
-      <div class="info">
+      <div
+        class="info"
+        bind:this={cardEl}
+      >
         <div class="music-icon">
           <svg
             viewBox="0 0 24 24"
@@ -163,12 +265,11 @@
           <div class="artist-name">{artist}</div>
         </div>
 
-        <div class="visualizer">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-        </div>
+        <div
+          class="visualizer-top"
+          bind:this={visualizerContainer}
+          aria-hidden="true"
+        ></div>
       </div>
     </div>
   </div>
@@ -260,6 +361,7 @@
 
   /* Info Section Styles */
   .info {
+    position: relative; /* ensure absolute children position inside this container */
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -320,22 +422,18 @@
     line-height: 1.3;
   }
 
-  /* Visualizer Styles */
-  .visualizer {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.25rem;
-    height: 2rem;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s;
-  }
-
-  .bar {
-    width: 0.25rem;
-    background: linear-gradient(to top, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8));
-    border-radius: 0.125rem;
-    animation: none;
+  /* bottom-positioned visualizer (flipped vertically) */
+  .visualizer-top {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    /* bottom is set dynamically in JS */
+    height: 10rem;
+    overflow: hidden;
+    background: transparent;
+    z-index: 2;
+    animation: visualizerPop 0.6s ease forwards 1s;
+    transition: bottom 200ms ease;
   }
 
   #now-playing[data-show="true"] .container {
@@ -375,29 +473,9 @@
     transform: translateY(0);
   }
 
-  #now-playing[data-show="true"] .visualizer {
+  #now-playing[data-show="true"] .visualizer-top {
     opacity: 1;
     transform: scale(1);
-  }
-
-  #now-playing[data-show="true"] .bar {
-    animation: visualize 1.2s ease-in-out infinite;
-  }
-
-  #now-playing[data-show="true"] .bar:nth-child(1) {
-    animation-delay: 0s;
-  }
-
-  #now-playing[data-show="true"] .bar:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  #now-playing[data-show="true"] .bar:nth-child(3) {
-    animation-delay: 0.4s;
-  }
-
-  #now-playing[data-show="true"] .bar:nth-child(4) {
-    animation-delay: 0.6s;
   }
 
   /* Animations */

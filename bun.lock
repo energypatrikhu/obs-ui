@@ -48,6 +48,7 @@
       "name": "@obs-ui/ui",
       "version": "0.0.1",
       "dependencies": {
+        "audiomotion-analyzer": "latest",
         "axios": "latest",
       },
       "devDependencies": {
@@ -350,6 +351,8 @@
     "atomic-sleep": ["atomic-sleep@1.0.0", "", {}, "sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ=="],
 
     "atomically": ["atomically@2.1.0", "", { "dependencies": { "stubborn-fs": "^2.0.0", "when-exit": "^2.1.4" } }, "sha512-+gDffFXRW6sl/HCwbta7zK4uNqbPjv4YJEAdz7Vu+FLQHe77eZ4bvbJGi4hE0QPeJlMYMA3piXEr1UL3dAwx7Q=="],
+
+    "audiomotion-analyzer": ["audiomotion-analyzer@4.5.2", "", {}, "sha512-u72xK+fVS8cjlJpd87w3ZePbtBW9zj/9yMIN95a+ew0eI/aO8UT9oWxSJtp9e5XRDCAdwDzbummc4FDyC2zWPg=="],
 
     "axios": ["axios@1.13.2", "", { "dependencies": { "follow-redirects": "^1.15.6", "form-data": "^4.0.4", "proxy-from-env": "^1.1.0" } }, "sha512-VPk9ebNqPcy5lRGuSlKx752IlDatOjT9paPlm8A7yOuW2Fbvp4X3JznJtT4f0GzGLLiWE9W8onz51SqLYwzGaA=="],
 

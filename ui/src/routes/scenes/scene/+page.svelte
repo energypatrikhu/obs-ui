@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import { getSocketIo } from "$lib/socket-io.svelte";
   import type { NowPlaying as NowPlayingType } from "$lib/types/NowPlaying";
+  import AudioMotionAnalyzer from "audiomotion-analyzer";
+  import axios from "axios";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
 
@@ -15,8 +17,89 @@
   let isUpdating = $state(true);
   let mounted = $state(false);
 
+  let visualizerContainer: HTMLDivElement | null = $state(null);
+  let analyzerInstance: AudioMotionAnalyzer | null = $state(null);
+  let audioStream: MediaStream | null = $state(null);
+  let cardEl: HTMLDivElement | null = $state(null);
+  let resizeObserver: ResizeObserver | null = $state(null);
+
+  function updateVisualizerPosition() {
+    if (!cardEl || !visualizerContainer) return;
+    const vizH = visualizerContainer.offsetHeight || parseFloat(getComputedStyle(visualizerContainer).height) || 0;
+    const offset = -Math.max(0, Math.round(vizH));
+    visualizerContainer.style.bottom = `${offset}px`;
+  }
+
+  $effect(() => {
+    (async () => {
+      try {
+        if (!visualizerContainer) {
+          return;
+        }
+
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioDevice = devices.find(
+          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("vaio3"),
+        );
+        if (!audioDevice) {
+          throw new Error('Audio device "vaio3" not found');
+        }
+
+        audioStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            noiseSuppression: false,
+            echoCancellation: false,
+            autoGainControl: false,
+            frameRate: { ideal: 60 },
+            sampleRate: 48000,
+            sampleSize: 24,
+            backgroundBlur: false,
+            deviceId: audioDevice.deviceId,
+            channelCount: 2,
+          },
+        });
+
+        analyzerInstance = new AudioMotionAnalyzer(visualizerContainer, {
+          mode: 4,
+          volume: 0,
+          channelLayout: "single",
+          showScaleX: false,
+          showBgColor: false,
+          overlay: true,
+          showPeaks: false,
+          roundBars: true,
+          ansiBands: false,
+          gradient: "steelblue",
+          frequencyScale: "log",
+          smoothing: 0.5,
+        });
+
+        analyzerInstance.registerGradient("colorSchema", {
+          colorStops: [currentTheme.accentColor, currentTheme.glowColor],
+        });
+        analyzerInstance.gradient = "colorSchema";
+
+        const source = analyzerInstance.audioCtx.createMediaStreamSource(audioStream);
+        analyzerInstance.connectInput(source);
+
+        // position the visualizer dynamically based on element size
+        updateVisualizerPosition();
+        if (cardEl || visualizerContainer) {
+          resizeObserver = new ResizeObserver(updateVisualizerPosition);
+          if (cardEl) resizeObserver.observe(cardEl);
+          if (visualizerContainer) resizeObserver.observe(visualizerContainer);
+          window.addEventListener("resize", updateVisualizerPosition);
+        }
+      } catch (err) {
+        console.warn("Microphone visualizer unavailable:", err);
+      }
+    })();
+  });
+
   // Get scene type from query parameter
-  let scene = $derived($page.url.searchParams.get("scene") || "brb");
+  let scene = $derived(page.url.searchParams.get("scene") || "brb");
 
   // Theme configuration based on scene
   type SceneKey = "brb" | "ending" | "starting-soon";
@@ -94,42 +177,40 @@
     }, 500);
 
     try {
-      const response = await fetch("http://localhost:2442/nowPlaying");
-      if (response.ok) {
-        const data: NowPlayingType = await response.json();
-        if (data && data.artist && data.track) {
-          // Preload images before showing
-          const imgPromises = [
-            new Promise((resolve) => {
-              const img = new Image();
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(true);
-              img.src = data.thumbnail;
-            }),
-            new Promise((resolve) => {
-              const img = new Image();
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(true);
-              img.src = data.favicon;
-            }),
-          ];
+      const resp = await axios.get<NowPlayingType>("http://localhost:2442/nowPlaying");
+      const data: NowPlayingType | undefined = resp.data;
+      if (data && data.artist && data.track) {
+        // Preload images before showing
+        const imgPromises = [
+          new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(true);
+            img.src = data.thumbnail;
+          }),
+          new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(true);
+            img.src = data.favicon;
+          }),
+        ];
 
-          await Promise.all(imgPromises);
+        await Promise.all(imgPromises);
 
-          artist = data.artist;
-          track = data.track;
-          thumbnail = data.thumbnail;
-          favicon = data.favicon;
-          hasData = true;
-          // Wait for card to render in invisible state, then fade in
-          setTimeout(() => {
+        artist = data.artist;
+        track = data.track;
+        thumbnail = data.thumbnail;
+        favicon = data.favicon;
+        hasData = true;
+        // Wait for card to render in invisible state, then fade in
+        setTimeout(() => {
+          requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                isUpdating = false;
-              });
+              isUpdating = false;
             });
-          }, 400);
-        }
+          });
+        }, 400);
       }
     } catch (error) {
       console.error("Failed to fetch current playing music:", error);
@@ -141,6 +222,22 @@
 
     return () => {
       socketIo.client.off("nowPlaying", updateNowPlaying);
+      try {
+        if (analyzerInstance && analyzerInstance.disconnectInput) {
+          analyzerInstance.disconnectInput();
+        }
+      } catch (e) {}
+      if (audioStream) {
+        audioStream.getTracks().forEach((t) => t.stop());
+      }
+
+      if (resizeObserver) {
+        try {
+          resizeObserver.disconnect();
+        } catch (e) {}
+        resizeObserver = null;
+      }
+      window.removeEventListener("resize", updateVisualizerPosition);
     };
   });
 </script>
@@ -175,6 +272,7 @@
           class="now-playing-card"
           data-updating={isUpdating}
           style="--thumbnail: url({thumbnail})"
+          bind:this={cardEl}
         >
           <div class="card-glow"></div>
           <div class="album-art-wrapper">
@@ -221,14 +319,13 @@
               <div class="track-name">{track}</div>
               <div class="artist-name">{artist}</div>
             </div>
-            <div class="visualizer">
-              <div class="bar"></div>
-              <div class="bar"></div>
-              <div class="bar"></div>
-              <div class="bar"></div>
-              <div class="bar"></div>
-            </div>
           </div>
+
+          <div
+            class="visualizer-bottom"
+            bind:this={visualizerContainer}
+            aria-hidden="true"
+          ></div>
         </div>
       {/if}
     </div>
@@ -400,7 +497,7 @@
       0 0 100px var(--glow-color);
     opacity: 1;
     transform: translateY(0) scale(1);
-    overflow: hidden;
+    /* overflow: hidden; */
     transition:
       opacity 0.3s ease,
       transform 0.3s ease;
@@ -616,58 +713,30 @@
     line-height: 1.3;
   }
 
-  .visualizer {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.35rem;
-    height: 3rem;
-    opacity: 0;
-    transform: scale(0);
+  /* bottom-positioned visualizer (flipped vertically) */
+  .visualizer-bottom {
+    position: absolute;
+    left: 2rem;
+    right: 2rem;
+    /* bottom is set dynamically in JS */
+    height: 12.5rem;
+    overflow: hidden;
+    background: transparent;
+    z-index: 2;
     animation: visualizerPop 0.6s ease forwards 1s;
+    transition: bottom 200ms ease;
+  }
+
+  /* Ensure the AudioMotionAnalyzer canvas is transparent and flipped vertically */
+  .visualizer-bottom :global(canvas) {
+    transform: scaleY(-1) !important;
+    -webkit-transform: scaleY(-1) !important;
   }
 
   @keyframes visualizerPop {
     to {
       opacity: 1;
       transform: scale(1);
-    }
-  }
-
-  .bar {
-    width: 0.35rem;
-    background: linear-gradient(to top, var(--accent-color), var(--glow-color));
-    border-radius: 0.175rem;
-    box-shadow: 0 0 10px var(--glow-color);
-    animation: visualize 1s ease-in-out infinite;
-  }
-
-  .bar:nth-child(1) {
-    animation-delay: 0s;
-  }
-
-  .bar:nth-child(2) {
-    animation-delay: 0.15s;
-  }
-
-  .bar:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-
-  .bar:nth-child(4) {
-    animation-delay: 0.45s;
-  }
-
-  .bar:nth-child(5) {
-    animation-delay: 0.6s;
-  }
-
-  @keyframes visualize {
-    0%,
-    100% {
-      height: 25%;
-    }
-    50% {
-      height: 100%;
     }
   }
 

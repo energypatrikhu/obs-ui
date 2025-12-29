@@ -24,6 +24,7 @@
     "vite": "^7.1.10"
   },
   "dependencies": {
-    "axios": "latest"
+    "axios": "latest",
+    "audiomotion-analyzer": "latest"
   }
 }
