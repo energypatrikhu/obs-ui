@@ -102,29 +102,6 @@
   let showPopup = $state(false);
   let imagesLoaded = $state(false);
 
-  function preloadImages(thumbnailUrl: string, faviconUrl: string) {
-    imagesLoaded = false;
-    let loadedCount = 0;
-    const totalImages = 2;
-
-    const checkAllLoaded = () => {
-      loadedCount++;
-      if (loadedCount === totalImages) {
-        imagesLoaded = true;
-      }
-    };
-
-    const thumbnailImg = new Image();
-    thumbnailImg.onload = checkAllLoaded;
-    thumbnailImg.onerror = checkAllLoaded; // Still show even if image fails
-    thumbnailImg.src = thumbnailUrl;
-
-    const faviconImg = new Image();
-    faviconImg.onload = checkAllLoaded;
-    faviconImg.onerror = checkAllLoaded;
-    faviconImg.src = faviconUrl;
-  }
-
   function popup() {
     if (!imagesLoaded) {
       // Wait for images to load before showing
@@ -165,12 +142,14 @@
       const imgPromises = [
         new Promise((resolve) => {
           const img = new Image();
+          img.referrerPolicy = "no-referrer";
           img.onload = () => resolve(true);
           img.onerror = () => resolve(true);
           img.src = data.thumbnail;
         }),
         new Promise((resolve) => {
           const img = new Image();
+          img.referrerPolicy = "no-referrer";
           img.onload = () => resolve(true);
           img.onerror = () => resolve(true);
           img.src = data.favicon;

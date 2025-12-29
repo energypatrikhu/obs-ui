@@ -185,12 +185,14 @@
       const imgPromises = [
         new Promise((resolve) => {
           const img = new Image();
+          img.referrerPolicy = "no-referrer";
           img.onload = () => resolve(true);
           img.onerror = () => resolve(true);
           img.src = data.thumbnail;
         }),
         new Promise((resolve) => {
           const img = new Image();
+          img.referrerPolicy = "no-referrer";
           img.onload = () => resolve(true);
           img.onerror = () => resolve(true);
           img.src = data.favicon;
