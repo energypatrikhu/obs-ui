@@ -15,17 +15,17 @@
     "prepare": "wxt prepare"
   },
   "devDependencies": {
-    "@tsconfig/svelte": "^5.0.5",
-    "@types/lodash": "latest",
+    "@tsconfig/svelte": "^5.0.7",
+    "@types/lodash": "4.17.23",
     "@wxt-dev/module-svelte": "^2.0.3",
-    "svelte": "^5.38.6",
-    "svelte-check": "^4.3.1",
+    "svelte": "^5.50.0",
+    "svelte-check": "^4.3.6",
     "tslib": "latest",
     "typescript": "latest",
-    "wxt": "^0.20.6"
+    "wxt": "^0.20.14"
   },
   "dependencies": {
     "@energypatrikhu/node-utils": "latest",
-    "lodash": "latest"
+    "lodash": "4.17.23"
   }
 }
