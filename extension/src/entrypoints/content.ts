@@ -24,26 +24,26 @@ export default defineContentScript({
     (async function autoChecker() {
       try {
         if (!settings.enabledDomains.includes(window.location.hostname)) {
-          setTimeout(autoChecker, 1000);
+          setTimeout(autoChecker, 100);
           return;
         }
 
         const metadata = await getMediaMetadataSync();
 
         if (metadata === null) {
-          setTimeout(autoChecker, 1000);
+          setTimeout(autoChecker, 100);
           return;
         }
 
         if (_metadata) {
           if (_.isEqual(metadata.info, _metadata.info)) {
-            setTimeout(autoChecker, 1000);
+            setTimeout(autoChecker, 100);
             return;
           }
         }
 
         if (isChanged) {
-          setTimeout(autoChecker, 1000);
+          setTimeout(autoChecker, 100);
           return;
         }
         isChanged = true;
@@ -65,7 +65,7 @@ export default defineContentScript({
       }
 
       isChanged = false;
-      setTimeout(autoChecker, 1000);
+      setTimeout(autoChecker, 100);
     })();
   },
 });
