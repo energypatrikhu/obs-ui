@@ -21,4 +21,9 @@ export class Logger {
     if (!this.enabled) return;
     console.warn(`[${this.prefix}] [warning]`, ...message);
   }
+
+  public debug(...message: Array<any>) {
+    if (!this.enabled) return;
+    console.debug(`[${this.prefix}] [debug]`, ...message);
+  }
 }
