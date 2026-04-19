@@ -3,8 +3,8 @@ import { defaultImage } from "#libs/defaultImage";
 import { Logger } from "#libs/logger";
 import TwitchApi from "#libs/twitchApi";
 import express from "express";
-import { createServer } from "http";
-import { join } from "path";
+import { createServer } from "node:http";
+import path, { join } from "node:path";
 import { Server } from "socket.io";
 
 import { handleIoCallbacks, handleIoTwitchCallbacks } from "#libs/io-callbacks";
@@ -272,6 +272,18 @@ import { Dirent, readdirSync } from "fs";
       handleIoCallbacks(app.locals.io, socket);
       handleIoTwitchCallbacks(app.locals.io, socket, app.locals.twitch);
     });
+
+    app.locals.config = app.locals.db.getConfig();
+
+    // Start OBS Studio
+    if (app.locals.config.obs.path) {
+      logger.info("Starting OBS Studio...");
+      const obsPath = app.locals.config.obs.path;
+      const obsArgs = app.locals.config.obs.args;
+      const obsProcess = Bun.spawn([obsPath, ...obsArgs], {
+        cwd: path.dirname(obsPath),
+      });
+    }
   });
 
   function errorHandler(err: any, type: string) {
