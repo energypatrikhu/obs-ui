@@ -4,9 +4,9 @@ import type { EventSubMessage, EventSubNotification, RefreshTokenResponse, Twitc
 import type * as TwitchEndpointRequests from "#types/TwitchEndpointRequests";
 import type * as TwitchEndpointResponses from "#types/TwitchEndpointResponses";
 import { sleep } from "@energypatrikhu/node-utils";
-import { execSync } from "child_process";
-import EventEmitter from "events";
 import _ from "lodash";
+import { execSync } from "node:child_process";
+import EventEmitter from "node:events";
 import type { Server } from "socket.io";
 import WebSocket from "ws";
 import twitchScopes from "../../all-scopes.json";

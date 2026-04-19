@@ -1,7 +1,6 @@
 import type AppDatabase from "#libs/database";
 import { Logger } from "#libs/logger";
-import { existsSync } from "fs";
-import { unlink } from "fs/promises";
+import { existsSync, rmSync } from "node:fs";
 
 const logger = new Logger("Migration");
 
@@ -26,7 +25,7 @@ export async function migrateJsonToDatabase(db: AppDatabase): Promise<void> {
       }
 
       // Remove old file
-      await unlink(widgetsPath);
+      rmSync(widgetsPath);
       logger.info("Removed old widgets.json file");
     } catch (error) {
       logger.error("Failed to migrate widgets.json:", error);
