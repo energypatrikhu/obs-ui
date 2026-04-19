@@ -17,6 +17,7 @@ export async function getSettings(): Promise<Settings> {
       }
 
       try {
+        // @ts-ignore
         const parsed = JSON.parse(keys[settingsKey]);
         resolve(parsed);
       } catch {
