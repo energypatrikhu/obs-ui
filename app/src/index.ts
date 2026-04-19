@@ -249,8 +249,6 @@ import { Dirent, readdirSync } from "fs";
           },
         },
       ]);
-
-      logger.info("Subscribed to Twitch WebSocket events");
     });
 
     app.locals.twitch.once("ready", () => {
@@ -267,23 +265,25 @@ import { Dirent, readdirSync } from "fs";
     };
 
     app.locals.widgetsSettings = app.locals.db.getWidgetSettings();
+    app.locals.config = app.locals.db.getConfig();
+
+    app.locals.twitch.once("subscribed-to-websocket-events", () => {
+      // Start OBS Studio
+      if (app.locals.config.obs.path) {
+        logger.info("Starting OBS Studio...");
+        const obsPath = app.locals.config.obs.path;
+        const obsArgs = app.locals.config.obs.args;
+        Bun.spawn({
+          cmd: [obsPath, ...(obsArgs || [])],
+          cwd: path.dirname(obsPath),
+        });
+      }
+    });
 
     app.locals.io.on("connection", (socket) => {
       handleIoCallbacks(app.locals.io, socket);
       handleIoTwitchCallbacks(app.locals.io, socket, app.locals.twitch);
     });
-
-    app.locals.config = app.locals.db.getConfig();
-
-    // Start OBS Studio
-    if (app.locals.config.obs.path) {
-      logger.info("Starting OBS Studio...");
-      const obsPath = app.locals.config.obs.path;
-      const obsArgs = app.locals.config.obs.args;
-      const obsProcess = Bun.spawn([obsPath, ...obsArgs], {
-        cwd: path.dirname(obsPath),
-      });
-    }
   });
 
   function errorHandler(err: any, type: string) {

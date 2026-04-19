@@ -247,6 +247,8 @@ export default class Twitch {
     }
 
     debug.info("Subscribed to websocket events");
+    logger.info("Subscribed to Twitch WebSocket events");
+
     this.externalEmitter.emit("subscribed-to-websocket-events");
   }
 
