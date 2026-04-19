@@ -1,6 +1,6 @@
 import { Logger } from "#libs/logger";
-import { existsSync, mkdirSync } from "fs";
-import { dirname } from "path";
+import { existsSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import twitchScopes from "../../all-scopes.json";
 
 const logger = new Logger("Database");
@@ -25,12 +25,20 @@ interface TwitchCredentials {
   refresh_token: string;
 }
 
+interface Config {
+  obs: {
+    path: string;
+    args: string[];
+  };
+}
+
 /**
  * AppDatabase - Manages application data storage using JSON files
  *
  * Storage Structure:
  * - widgets.json: Stores widget configurations and disabled widgets list
  * - credentials.json: Stores Twitch API credentials
+ * - config.json: Stores application configuration settings
  *
  * Widget Settings Structure:
  * {
@@ -47,12 +55,15 @@ interface TwitchCredentials {
 class AppDatabase {
   private widgetsPath: string;
   private credentialsPath: string;
+  private configPath: string;
   private widgetsCache: WidgetSettings | null = null;
   private credentialsCache: TwitchCredentials | null = null;
+  private configCache: Config | null = null;
 
   private constructor(dataDir: string = "./data") {
     this.widgetsPath = `${dataDir}/widgets.json`;
     this.credentialsPath = `${dataDir}/credentials.json`;
+    this.configPath = `${dataDir}/config.json`;
   }
 
   static async create(dataDir: string = "./data"): Promise<AppDatabase> {
@@ -64,7 +75,7 @@ class AppDatabase {
 
   private async initialize() {
     // Ensure data directory exists
-    await mkdirSync(dirname(this.widgetsPath), { recursive: true });
+    mkdirSync(dirname(this.widgetsPath), { recursive: true });
 
     // Initialize widgets file if it doesn't exist
     if (!existsSync(this.widgetsPath)) {
@@ -92,9 +103,20 @@ class AppDatabase {
       });
     }
 
+    // Initialize config file if it doesn't exist
+    if (!existsSync(this.configPath)) {
+      await this.saveConfig({
+        obs: {
+          path: "",
+          args: [],
+        },
+      });
+    }
+
     // Load initial cache
     await this.loadWidgets();
     await this.loadCredentials();
+    await this.loadConfig();
   }
 
   // ========== File I/O Methods ==========
@@ -157,6 +179,34 @@ class AppDatabase {
       this.credentialsCache = data;
     } catch (error) {
       logger.error("Failed to save credentials.json", error);
+      throw error;
+    }
+  }
+
+  private async loadConfig(): Promise<Config> {
+    try {
+      this.configCache = await Bun.file(this.configPath).json();
+      return this.configCache!;
+    } catch (error) {
+      logger.error("Failed to load config.json", error);
+      // Return default if file is corrupted
+      const defaults: Config = {
+        obs: {
+          path: "",
+          args: [],
+        },
+      };
+      this.configCache = defaults;
+      return defaults;
+    }
+  }
+
+  private async saveConfig(data: Config): Promise<void> {
+    try {
+      await Bun.write(this.configPath, JSON.stringify(data, null, 2));
+      this.configCache = data;
+    } catch (error) {
+      logger.error("Failed to save config.json", error);
       throw error;
     }
   }
@@ -323,6 +373,41 @@ class AppDatabase {
     if (credentials.refresh_token !== undefined) current.refresh_token = credentials.refresh_token;
 
     await this.saveCredentials(current);
+  }
+
+  // ========== Config Methods ==========
+
+  /**
+   * Get application config
+   */
+  public getConfig(): Config {
+    return (
+      this.configCache ?? {
+        obs: {
+          path: "",
+          args: [],
+        },
+      }
+    );
+  }
+
+  /**
+   * Update application config
+   */
+  public async setConfig(config: {
+    obs?: {
+      path?: string;
+      args?: string[];
+    };
+  }): Promise<void> {
+    const current = await this.loadConfig();
+
+    if (config.obs) {
+      if (config.obs.path !== undefined) current.obs.path = config.obs.path;
+      if (config.obs.args !== undefined) current.obs.args = config.obs.args;
+    }
+
+    await this.saveConfig(current);
   }
 }
 
