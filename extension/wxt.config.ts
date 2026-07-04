@@ -7,10 +7,15 @@ export default defineConfig({
   },
   srcDir: "src",
   modules: ["@wxt-dev/module-svelte"],
-  manifestVersion: 2,
+  manifestVersion: 3,
   manifest: {
     host_permissions: ["http://localhost:2442/*"],
     permissions: ["storage", "tabs", "activeTab", "http://localhost:2442/*"],
-    web_accessible_resources: ["**/*"],
+    web_accessible_resources: [
+      {
+        resources: ["**/*"],
+        matches: ["<all_urls>"],
+      },
+    ],
   },
 });

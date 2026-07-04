@@ -2,7 +2,7 @@ import { cpSync } from "fs";
 import { join, resolve } from "path";
 
 const dirsToCopy: { [key: string]: string } = {
-  ".output/chrome-mv2": "extension",
+  ".output/chrome-mv3": "extension",
 };
 
 for (const key in dirsToCopy) {
