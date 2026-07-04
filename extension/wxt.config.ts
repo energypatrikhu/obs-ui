@@ -10,7 +10,7 @@ export default defineConfig({
   manifestVersion: 3,
   manifest: {
     host_permissions: ["http://localhost:2442/*"],
-    permissions: ["storage", "tabs", "activeTab", "http://localhost:2442/*"],
+    permissions: ["storage", "tabs", "activeTab"],
     web_accessible_resources: [
       {
         resources: ["**/*"],
