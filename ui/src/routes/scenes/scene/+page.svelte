@@ -41,10 +41,10 @@
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioDevice = devices.find(
-          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("vaio3"),
+          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("browser"),
         );
         if (!audioDevice) {
-          throw new Error('Audio device "vaio3" not found');
+          throw new Error('Audio device "browser" not found');
         }
 
         audioStream = await navigator.mediaDevices.getUserMedia({
