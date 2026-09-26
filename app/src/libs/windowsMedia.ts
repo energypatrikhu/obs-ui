@@ -1,5 +1,6 @@
 import type { WindowsMedia, WindowsMediaPlaybackStatus } from "#types/WindowsMedia";
 import { PlaybackStatus, SMTCMonitor, type MediaInfo } from "@coooookies/windows-smtc-monitor";
+// @ts-ignore
 import powershellScript from "../external/app-icon.ps1" with { type: "text" };
 
 const MAX_ALBUM_ART_BYTES = 8 * 1024 * 1024;
