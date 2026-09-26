@@ -25,12 +25,29 @@ interface TwitchCredentials {
   refresh_token: string;
 }
 
-interface Config {
+export interface WindowsMediaConfig {
+  enabled: boolean;
+  intervalMs: number;
+  allowedApps: string[];
+  playingOnly: boolean;
+  includeAlbumArt: boolean;
+}
+
+export interface Config {
   obs: {
     path: string;
     args: string[];
   };
+  windowsMedia: WindowsMediaConfig;
 }
+
+const DEFAULT_WINDOWS_MEDIA_CONFIG: WindowsMediaConfig = {
+  enabled: true,
+  intervalMs: 1000,
+  allowedApps: [],
+  playingOnly: false,
+  includeAlbumArt: true,
+};
 
 /**
  * AppDatabase - Manages application data storage using JSON files
@@ -110,6 +127,7 @@ class AppDatabase {
           path: "",
           args: [],
         },
+        windowsMedia: { ...DEFAULT_WINDOWS_MEDIA_CONFIG },
       });
     }
 
@@ -185,8 +203,41 @@ class AppDatabase {
 
   private async loadConfig(): Promise<Config> {
     try {
-      this.configCache = await Bun.file(this.configPath).json();
-      return this.configCache!;
+      const config = await Bun.file(this.configPath).json();
+
+      // Merge defaults so older config.json files automatically gain new
+      // settings without losing values or unknown configuration keys.
+      const normalizedConfig: Config = {
+        ...config,
+        obs: {
+          path: config.obs?.path ?? "",
+          args: Array.isArray(config.obs?.args) ? config.obs.args : [],
+        },
+        windowsMedia: {
+          ...DEFAULT_WINDOWS_MEDIA_CONFIG,
+          ...(config.windowsMedia ?? {}),
+          intervalMs: (() => {
+            const intervalMs = Number(config.windowsMedia?.intervalMs ?? DEFAULT_WINDOWS_MEDIA_CONFIG.intervalMs);
+            return Number.isFinite(intervalMs) ? Math.max(100, intervalMs) : DEFAULT_WINDOWS_MEDIA_CONFIG.intervalMs;
+          })(),
+          allowedApps: Array.isArray(config.windowsMedia?.allowedApps)
+            ? config.windowsMedia.allowedApps.filter((app: unknown): app is string => typeof app === "string" && app.trim().length > 0)
+            : [...DEFAULT_WINDOWS_MEDIA_CONFIG.allowedApps],
+          enabled: config.windowsMedia?.enabled !== false,
+          playingOnly: config.windowsMedia?.playingOnly === true,
+          includeAlbumArt: config.windowsMedia?.includeAlbumArt !== false,
+        },
+      };
+
+      this.configCache = normalizedConfig;
+
+      // Migrate older installations so the new Windows media settings are
+      // visible in data/config.json without requiring manual file edits.
+      if (config.windowsMedia === undefined) {
+        await Bun.write(this.configPath, JSON.stringify(normalizedConfig, null, 2));
+      }
+
+      return this.configCache;
     } catch (error) {
       logger.error("Failed to load config.json", error);
       // Return default if file is corrupted
@@ -195,6 +246,7 @@ class AppDatabase {
           path: "",
           args: [],
         },
+        windowsMedia: { ...DEFAULT_WINDOWS_MEDIA_CONFIG },
       };
       this.configCache = defaults;
       return defaults;
@@ -387,6 +439,7 @@ class AppDatabase {
           path: "",
           args: [],
         },
+        windowsMedia: { ...DEFAULT_WINDOWS_MEDIA_CONFIG },
       }
     );
   }
@@ -399,12 +452,39 @@ class AppDatabase {
       path?: string;
       args?: string[];
     };
+    windowsMedia?: {
+      enabled?: boolean;
+      intervalMs?: number;
+      allowedApps?: string[];
+      playingOnly?: boolean;
+      includeAlbumArt?: boolean;
+    };
   }): Promise<void> {
     const current = await this.loadConfig();
 
     if (config.obs) {
       if (config.obs.path !== undefined) current.obs.path = config.obs.path;
       if (config.obs.args !== undefined) current.obs.args = config.obs.args;
+    }
+
+    if (config.windowsMedia) {
+      if (config.windowsMedia.enabled !== undefined) {
+        current.windowsMedia.enabled = config.windowsMedia.enabled;
+      }
+      if (config.windowsMedia.intervalMs !== undefined) {
+        current.windowsMedia.intervalMs = Math.max(100, config.windowsMedia.intervalMs);
+      }
+      if (config.windowsMedia.allowedApps !== undefined) {
+        current.windowsMedia.allowedApps = config.windowsMedia.allowedApps.filter(
+          (app) => typeof app === "string" && app.trim().length > 0,
+        );
+      }
+      if (config.windowsMedia.playingOnly !== undefined) {
+        current.windowsMedia.playingOnly = config.windowsMedia.playingOnly;
+      }
+      if (config.windowsMedia.includeAlbumArt !== undefined) {
+        current.windowsMedia.includeAlbumArt = config.windowsMedia.includeAlbumArt;
+      }
     }
 
     await this.saveConfig(current);

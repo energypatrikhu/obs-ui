@@ -2,6 +2,7 @@ import AppDatabase from "#libs/database";
 import { defaultImage } from "#libs/defaultImage";
 import { Logger } from "#libs/logger";
 import TwitchApi from "#libs/twitchApi";
+import { WindowsMediaWatcher } from "#libs/windowsMedia";
 import express from "express";
 import { createServer } from "node:http";
 import path, { join } from "node:path";
@@ -9,6 +10,7 @@ import { Server } from "socket.io";
 
 import { handleIoCallbacks, handleIoTwitchCallbacks } from "#libs/io-callbacks";
 
+import { handleWindowsNowPlaying } from "#libs/windowsNowPlaying.ts";
 import nowPlayingRoute from "#routes/nowPlaying";
 import twitchCallbackRoute from "#routes/twitchCallback";
 import widgetsSettingsRoute from "#routes/widgetsSettings";
@@ -266,6 +268,28 @@ import { Dirent, readdirSync } from "fs";
 
     app.locals.widgetsSettings = app.locals.db.getWidgetSettings();
     app.locals.config = app.locals.db.getConfig();
+
+    // Keep the Windows global media listener running in the background.
+    // Its behavior is configured through data/config.json and its current
+    // value is published over Socket.IO as the "windowsMedia" event.
+    if (process.platform === "win32" && app.locals.config.windowsMedia.enabled) {
+      const windowsMediaConfig = app.locals.config.windowsMedia;
+      const windowsMediaWatcher = new WindowsMediaWatcher({
+        intervalMs: windowsMediaConfig.intervalMs,
+        allowedApps: windowsMediaConfig.allowedApps,
+        playingOnly: windowsMediaConfig.playingOnly,
+        onChange: (media) => {
+          handleWindowsNowPlaying(app, media!);
+        },
+        onError: (error) => {
+          logger.error("Windows media reader error", error instanceof Error ? error.message : String(error));
+        },
+      });
+
+      app.locals.windowsMediaWatcher = windowsMediaWatcher;
+      windowsMediaWatcher.start();
+      logger.info("Windows media listener started");
+    }
 
     app.locals.twitch.once("subscribed-to-websocket-events", () => {
       // Start OBS Studio
