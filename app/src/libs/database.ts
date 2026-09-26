@@ -1,7 +1,7 @@
 import { Logger } from "#libs/logger";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import twitchScopes from "../../all-scopes.json";
+import twitchScopes from "../external/all-scopes.json";
 
 const logger = new Logger("Database");
 
@@ -220,8 +220,11 @@ class AppDatabase {
             const intervalMs = Number(config.windowsMedia?.intervalMs ?? DEFAULT_WINDOWS_MEDIA_CONFIG.intervalMs);
             return Number.isFinite(intervalMs) ? Math.max(100, intervalMs) : DEFAULT_WINDOWS_MEDIA_CONFIG.intervalMs;
           })(),
-          allowedApps: Array.isArray(config.windowsMedia?.allowedApps)
-            ? config.windowsMedia.allowedApps.filter((app: unknown): app is string => typeof app === "string" && app.trim().length > 0)
+          allowedApps:
+            Array.isArray(config.windowsMedia?.allowedApps) ?
+              config.windowsMedia.allowedApps.filter(
+                (app: unknown): app is string => typeof app === "string" && app.trim().length > 0,
+              )
             : [...DEFAULT_WINDOWS_MEDIA_CONFIG.allowedApps],
           enabled: config.windowsMedia?.enabled !== false,
           playingOnly: config.windowsMedia?.playingOnly === true,
