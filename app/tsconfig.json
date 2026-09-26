@@ -26,6 +26,8 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
 
+    "types": ["bun"],
+
     "paths": {
       "#libs/*": ["./src/libs/*"],
       "#types/*": ["./src/_types/*"],
