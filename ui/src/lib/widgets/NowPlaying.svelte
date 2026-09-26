@@ -32,23 +32,25 @@
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioDevice = devices.find(
-          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("browser"),
+          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("music"),
         );
         if (!audioDevice) {
-          throw new Error('Audio device "browser" not found');
+          throw new Error('Audio device "music" not found');
         }
+
+        console.log(audioDevice);
 
         audioStream = await navigator.mediaDevices.getUserMedia({
           audio: {
             noiseSuppression: false,
             echoCancellation: false,
             autoGainControl: false,
-            frameRate: { ideal: 60 },
-            sampleRate: 48000,
-            sampleSize: 24,
+            // frameRate: { ideal: 60 },
+            // sampleRate: 48000,
+            // sampleSize: 24,
             backgroundBlur: false,
             deviceId: audioDevice.deviceId,
-            channelCount: 2,
+            // channelCount: 2,
           },
         });
 

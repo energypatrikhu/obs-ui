@@ -41,10 +41,10 @@
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioDevice = devices.find(
-          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("browser"),
+          (device) => device.kind === "audioinput" && device.label.toLowerCase().includes("music"),
         );
         if (!audioDevice) {
-          throw new Error('Audio device "browser" not found');
+          throw new Error('Audio device "music" not found');
         }
 
         audioStream = await navigator.mediaDevices.getUserMedia({
