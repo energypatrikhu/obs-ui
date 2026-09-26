@@ -9,7 +9,7 @@ import { execSync } from "node:child_process";
 import EventEmitter from "node:events";
 import type { Server } from "socket.io";
 import WebSocket from "ws";
-import twitchScopes from "../../all-scopes.json";
+import twitchScopes from "../external/all-scopes.json";
 
 const logger = new Logger("TwitchApi");
 // const debug = new Logger('TwitchApi - Debug', !!process.env.NODE);
