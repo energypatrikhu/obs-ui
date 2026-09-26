@@ -6,6 +6,10 @@ import type { Express } from "express";
 const logger = new Logger("Windows - Now Playing");
 
 export async function handleWindowsNowPlaying(app: Express, media: WindowsMedia) {
+  if (!media.playbackStatus || media.playbackStatus !== "playing") {
+    return;
+  }
+
   const currentDate = Date.now();
   const reAlerts = [currentDate];
   if (media.duration) {

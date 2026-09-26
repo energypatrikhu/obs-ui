@@ -279,7 +279,7 @@ import { Dirent, readdirSync } from "fs";
         allowedApps: windowsMediaConfig.allowedApps,
         playingOnly: windowsMediaConfig.playingOnly,
         onChange: (media) => {
-          handleWindowsNowPlaying(app, media!);
+          if (media) handleWindowsNowPlaying(app, media);
         },
         onError: (error) => {
           logger.error("Windows media reader error", error instanceof Error ? error.message : String(error));
